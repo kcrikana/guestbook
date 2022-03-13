@@ -1,9 +1,17 @@
 package org.zerock.guestbook.repository;
 
+import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.Visitor;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.zerock.guestbook.entity.Guestbook;
+import org.zerock.guestbook.entity.QGuestbook;
 
 import java.util.Optional;
 import java.util.stream.IntStream;
@@ -40,4 +48,81 @@ public class GuestbookRepositoryTests {
         }
     }
 
+    /***
+     *  Querydsl의 장점은 문자가 아닌 코드 형태로 작성하기 때문에 컴파일 단계에서 오류를 발견하기 쉽다
+     *  동적 쿼리 작성이 쉽다
+     *  다만 단점으로는 gradle설정이 까다롭다
+     */
+    
+    @Test
+    public void testQuery1() {
+
+        PageRequest pageable = PageRequest.of(0, 10, Sort.by("gno").descending());
+
+        QGuestbook qGuestbook = QGuestbook.guestbook;
+
+        String keyword = "1";
+
+        BooleanBuilder builder = new BooleanBuilder();
+
+        BooleanExpression expression = qGuestbook.title.contains(keyword);
+
+        builder.and(expression);
+
+        Page<Guestbook> result = guestbookRepository.findAll(builder, pageable);
+
+        result.stream().forEach(guestbook -> {
+            System.out.println(guestbook);
+        });
+    }
+
+    @Test
+    public void testQuery2() {
+
+        Pageable pageable = PageRequest.of(0, 10, Sort.by("gno").descending());
+
+        QGuestbook qGuestbook = QGuestbook.guestbook;
+
+        String keyword = "1";
+
+        BooleanBuilder builder = new BooleanBuilder();
+
+        BooleanExpression exTitle = qGuestbook.title.contains(keyword);
+
+        BooleanExpression exContent = qGuestbook.content.contains(keyword);
+
+        BooleanExpression exAll = exTitle.or(exContent);
+
+        builder.and(exAll);
+
+        builder.and(qGuestbook.gno.gt(0L));
+
+        Page<Guestbook> result = guestbookRepository.findAll(builder, pageable);
+
+        result.stream().forEach(guestbook -> {
+            System.out.println(guestbook);
+        });
+
+    }
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
